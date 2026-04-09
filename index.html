@@ -3,620 +3,954 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>연차 계산기 (입사일 기준 vs 회계연도 기준)</title>
+  <title>근태관리시스템</title>
   <style>
     :root {
-      --bg: #f4f7fb;
+      --bg: #f6f8fb;
       --card: #ffffff;
-      --text: #10243e;
-      --muted: #55657d;
-      --line: #d8e0eb;
-      --accent: #0e7490;
-      --accent-soft: #ecfeff;
-      --warn: #9a3412;
+      --line: #dbe3ef;
+      --text: #13233a;
+      --muted: #607089;
+      --ok: #0d9488;
+      --warn: #b45309;
+      --danger: #b91c1c;
+      --accent: #0369a1;
+      --accent-soft: #e0f2fe;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: "Noto Sans KR", "Pretendard", "Malgun Gothic", sans-serif;
+      font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at 0% 0%, #e0f2fe 0%, transparent 30%),
-        radial-gradient(circle at 100% 100%, #dbeafe 0%, transparent 35%),
+        radial-gradient(circle at 10% 0%, #dbeafe 0%, transparent 25%),
+        radial-gradient(circle at 90% 100%, #cffafe 0%, transparent 30%),
         var(--bg);
-      min-height: 100vh;
     }
 
     .wrap {
-      max-width: 980px;
-      margin: 40px auto;
-      padding: 0 16px 24px;
+      max-width: 1100px;
+      margin: 28px auto;
+      padding: 0 14px 20px;
+      display: grid;
+      gap: 14px;
     }
 
-    .panel {
+    .card {
       background: var(--card);
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(16, 36, 62, 0.06);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(10, 30, 60, 0.06);
+      padding: 16px;
     }
 
-    h1 {
-      font-size: 1.5rem;
-      margin: 0 0 8px;
+    h1, h2 {
+      margin: 0 0 10px;
       line-height: 1.3;
     }
 
+    h1 { font-size: 1.45rem; }
+    h2 { font-size: 1.02rem; }
+
     .sub {
-      margin: 0 0 20px;
+      margin: 0;
       color: var(--muted);
-      line-height: 1.5;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-bottom: 14px;
+      gap: 12px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
     }
 
     label {
       display: block;
-      font-size: 0.86rem;
+      font-size: 0.85rem;
+      color: #1e3353;
       margin-bottom: 6px;
-      color: #1e2f49;
       font-weight: 600;
     }
 
     input, select, button {
       width: 100%;
+      border: 1px solid #c8d5e8;
       border-radius: 10px;
-      border: 1px solid #c5d2e3;
-      padding: 10px 12px;
-      font-size: 0.95rem;
-      color: var(--text);
       background: #fff;
+      color: var(--text);
+      padding: 10px 11px;
+      font-size: 0.93rem;
+    }
+
+    input[type="time"] {
+      padding: 6px 8px;
+      font-size: 0.85rem;
     }
 
     button {
-      margin-top: 6px;
       border: 0;
-      background: linear-gradient(135deg, #0891b2, #0284c7);
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
       color: #fff;
       font-weight: 700;
       cursor: pointer;
-      transition: transform .12s ease, box-shadow .12s ease;
-      box-shadow: 0 8px 18px rgba(2, 132, 199, 0.25);
     }
 
-    button:hover {
-      transform: translateY(-1px);
+    button.secondary {
+      background: #e2e8f0;
+      color: #1f2937;
     }
 
-    .result {
-      margin-top: 18px;
+    .toolbar {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: end;
     }
 
-    .card {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px;
-      background: #fff;
+    .status-chip {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
     }
 
-    .card h2 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-    }
+    .on { background: #ccfbf1; color: #0f766e; }
+    .off { background: #e2e8f0; color: #334155; }
 
-    .num {
-      font-size: 2rem;
-      font-weight: 800;
-      color: var(--accent);
-      line-height: 1;
-      margin: 10px 0 6px;
-    }
-
-    .desc {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-    .note {
-      margin-top: 16px;
-      border: 1px solid #fed7aa;
-      background: #fff7ed;
-      color: var(--warn);
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 0.88rem;
-      line-height: 1.55;
-    }
-
-    .summary {
-      margin-top: 14px;
-      border-radius: 12px;
-      background: var(--accent-soft);
-      border: 1px solid #bae6fd;
-      padding: 12px;
-      font-size: 0.92rem;
-      line-height: 1.55;
-      color: #0c4a6e;
-    }
-
-    .yearly {
-      margin-top: 14px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
-    }
-
-    .yearly h3 {
-      margin: 0;
-      padding: 12px 14px;
-      font-size: 0.98rem;
-      border-bottom: 1px solid var(--line);
-      background: #f8fafc;
-    }
-
-    .yearly table {
+    table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.9rem;
     }
 
-    .yearly th, .yearly td {
-      border-bottom: 1px solid #edf2f7;
-      padding: 10px 12px;
-      text-align: right;
-    }
-
-    .yearly th:first-child, .yearly td:first-child {
+    th, td {
+      padding: 9px 8px;
+      border-bottom: 1px solid #eef2f7;
       text-align: left;
+      vertical-align: middle;
     }
 
-    .yearly tr:last-child td {
-      border-bottom: 0;
+    th { background: #f8fafc; color: #334155; }
+    td.num, th.num { text-align: right; }
+
+    .row-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(60px, auto));
+      gap: 6px;
+      align-items: center;
+    }
+
+    .row-actions button {
+      padding: 7px 8px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+    }
+
+    .row-actions .edit { background: #2563eb; }
+    .row-actions .danger { background: #dc2626; }
+
+    .kpi {
+      border-radius: 10px;
+      border: 1px solid #cfe7ff;
+      background: var(--accent-soft);
+      padding: 10px;
+      font-size: 0.9rem;
+      color: #0c4a6e;
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tab-btn {
+      width: auto;
+      padding: 8px 14px;
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-size: 0.86rem;
       font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.show { display: grid; gap: 14px; }
+    .attendance-subpanel { display: none; }
+    .attendance-subpanel.show { display: block; }
+
+    .calendar {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .calendar-head,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .calendar-head div {
       background: #f8fafc;
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: #334155;
+      text-align: center;
     }
 
-    .hidden {
+    .calendar-cell {
+      min-height: 98px;
+      border-right: 1px solid #eef2f7;
+      border-bottom: 1px solid #eef2f7;
+      padding: 6px;
+      font-size: 0.8rem;
+      background: #fff;
+    }
+
+    .calendar-cell:nth-child(7n) { border-right: 0; }
+    .calendar-cell.empty { background: #f8fafc; }
+    .calendar-cell.sat .day-num { color: #1d4ed8; }
+    .calendar-cell.sun .day-num { color: #dc2626; }
+
+    .day-num {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .cal-line {
+      color: #334155;
+      line-height: 1.35;
+    }
+
+    .cal-line.muted { color: #94a3b8; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
       display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.45);
+      padding: 14px;
+      z-index: 50;
     }
 
-    @media (max-width: 760px) {
-      .grid, .result { grid-template-columns: 1fr; }
-      .wrap { margin-top: 24px; }
+    .modal.show { display: flex; }
+
+    .modal-card {
+      width: min(760px, 100%);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 20px 48px rgba(15, 23, 42, 0.24);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+
+    .modal-close {
+      width: auto;
+      padding: 7px 10px;
+      background: #e2e8f0;
+      color: #1e293b;
+      border-radius: 8px;
+      font-size: 0.82rem;
+    }
+
+    .pay-summary {
+      margin-top: 12px;
+      border: 1px solid #cfe7ff;
+      background: #f0f9ff;
+      border-radius: 10px;
+      padding: 10px;
+      color: #0c4a6e;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 860px) {
+      .grid, .grid-3, .toolbar { grid-template-columns: 1fr; }
+      .row-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .wrap { margin-top: 14px; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <section class="panel">
-      <h1>연차 계산기</h1>
-      <p class="sub">
-        근로기준법 기본 구조를 바탕으로 <strong>입사일 기준</strong>과 <strong>회계연도 기준</strong> 연차를 비교합니다.
-        기준일 시점에서 해당 방식으로 산정되는 연차 일수를 보여줍니다.
-      </p>
+    <section class="card">
+      <h1>근태관리시스템</h1>
+      <p class="sub">직원 등록, 출근/퇴근 처리, 달력 조회, 주휴수당 포함 월급 산출을 지원합니다.</p>
+      <div style="margin-top: 10px;">
+        <button id="openEmployeeModal" type="button" style="max-width: 220px;">직원 등록 팝업 열기</button>
+      </div>
+      <div class="tabs">
+        <button id="tabAttendance" class="tab-btn active" type="button">근태관리</button>
+        <button id="tabPayroll" class="tab-btn" type="button">급여산출</button>
+      </div>
+      <p class="hint">데이터는 현재 브라우저의 로컬스토리지(`attendance-system-v1`)에 저장됩니다.</p>
+    </section>
 
-      <form id="form">
-        <div class="grid">
+    <section id="attendancePanel" class="tab-panel show">
+      <div class="tabs">
+        <button id="subTabProcess" class="tab-btn active" type="button">근태처리</button>
+        <button id="subTabCalendar" class="tab-btn" type="button">근태달력</button>
+        <button id="subTabHistory" class="tab-btn" type="button">개별조회</button>
+      </div>
+
+      <section id="processPanel" class="card attendance-subpanel show">
+        <h2>근태 처리</h2>
+        <div class="toolbar">
           <div>
-            <label for="joinDate">입사일</label>
-            <input id="joinDate" type="date" required />
+            <label for="workDate">처리 기준일</label>
+            <input id="workDate" type="date" />
           </div>
-          <div>
-            <label for="startDate">시작일 (연도별 발생 조회 시작)</label>
-            <input id="startDate" type="date" required />
-          </div>
-          <div>
-            <label for="baseDate">기준일 (비교 시점)</label>
-            <input id="baseDate" type="date" required />
-          </div>
-          <div>
-            <label for="fiscalMonth">회계연도 시작 월</label>
-            <select id="fiscalMonth"></select>
-          </div>
-          <div>
-            <label for="fiscalDay">회계연도 시작 일</label>
-            <select id="fiscalDay"></select>
-          </div>
-          <div>
-            <label for="attendance">1년 이상 근로자의 출근율 80% 이상 여부</label>
-            <select id="attendance">
-              <option value="yes" selected>예 (80% 이상)</option>
-              <option value="no">아니오 (80% 미만)</option>
-            </select>
-          </div>
+          <button id="refreshBtn" type="button" class="secondary">새로고침</button>
+          <button id="exportBtn" type="button">CSV 내보내기</button>
         </div>
-
-        <button type="submit">연차 계산하기</button>
-      </form>
-
-      <section id="result" class="hidden">
-        <div class="result">
-          <article class="card">
-            <h2>입사일 기준 산정</h2>
-            <div id="hireDays" class="num">0일</div>
-            <p id="hireDesc" class="desc"></p>
-          </article>
-          <article class="card">
-            <h2>회계연도 기준 산정</h2>
-            <div id="fiscalDays" class="num">0일</div>
-            <p id="fiscalDesc" class="desc"></p>
-          </article>
-        </div>
-
-        <div id="summary" class="summary"></div>
-        <section class="yearly">
-          <h3>시작일~기준일 연도별 발생 연차</h3>
+        <div style="margin-top: 12px; overflow-x: auto;">
           <table>
             <thead>
               <tr>
-                <th>연도</th>
-                <th>입사일 기준</th>
-                <th>회계연도 기준</th>
-                <th>차이(회계-입사)</th>
+                <th>이름</th>
+                <th>부서</th>
+                <th>상태</th>
+                <th>출근</th>
+                <th>퇴근</th>
+                <th class="num">근무(시간)</th>
+                <th>처리</th>
               </tr>
             </thead>
-            <tbody id="yearlyBody"></tbody>
+            <tbody id="employeeRows"></tbody>
           </table>
-        </section>
+        </div>
       </section>
 
-      <div class="note">
-        <strong>가정/유의사항</strong><br />
-        1) 법정 기본 산식: 1년 미만(또는 80% 미만)은 개근 월당 1일, 1년 이상은 15일 + 2년마다 1일 가산(최대 25일).<br />
-        2) 회계연도 기준은 기업 실무의 일반적 방식(첫 회계연도 전환 시 비례연차 부여)을 단순화해 반영했습니다.<br />
-        3) 단체협약/취업규칙/노무사 해석에 따라 실제 부여일수는 달라질 수 있습니다.
-      </div>
+      <section id="calendarPanel" class="card attendance-subpanel">
+        <h2>근태 달력</h2>
+        <div class="grid">
+          <div>
+            <label for="calendarMonth">조회 월</label>
+            <input id="calendarMonth" type="month" />
+          </div>
+        </div>
+        <p class="hint">달력에는 근무자와 근무시간만 표시됩니다. 예: 홍길동 7.50시간</p>
+        <div class="calendar">
+          <div class="calendar-head">
+            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+      </section>
+
+      <section id="historyPanel" class="card attendance-subpanel">
+        <h2>개별조회</h2>
+        <div class="grid">
+          <div>
+            <label for="historyEmployee">직원</label>
+            <select id="historyEmployee"></select>
+          </div>
+          <div>
+            <label for="historyMonth">조회 월</label>
+            <input id="historyMonth" type="month" />
+          </div>
+        </div>
+        <div id="kpi" class="kpi" style="margin-top: 10px;">총 근무시간: 0시간 | 지각(09:00 이후 출근): 0회</div>
+        <div style="margin-top: 12px; overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>날짜</th>
+                <th>출근</th>
+                <th>퇴근</th>
+                <th class="num">근무시간</th>
+              </tr>
+            </thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="payrollPanel" class="tab-panel">
+      <section class="card">
+        <h2>월급 산출 (주휴수당 포함)</h2>
+        <div class="grid-3">
+          <div>
+            <label for="payEmployee">직원</label>
+            <select id="payEmployee"></select>
+          </div>
+          <div>
+            <label for="payMonth">산정 월</label>
+            <input id="payMonth" type="month" />
+          </div>
+          <div>
+            <label for="hourlyWage">시급(원)</label>
+            <input id="hourlyWage" type="number" min="0" step="10" placeholder="예: 10030" />
+          </div>
+        </div>
+        <div style="margin-top: 10px;">
+          <button id="calcPayrollBtn" type="button" style="max-width: 220px;">월급 계산</button>
+        </div>
+        <div id="paySummary" class="pay-summary">직원, 산정 월, 시급을 입력 후 계산해 주세요.</div>
+        <div style="margin-top: 12px; overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>주차(월~일)</th>
+                <th class="num">실근무시간</th>
+                <th class="num">근무일수</th>
+                <th class="num">주휴시간</th>
+                <th class="num">주휴수당(원)</th>
+              </tr>
+            </thead>
+            <tbody id="payWeekRows">
+              <tr><td colspan="5">아직 계산 결과가 없습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
   </main>
 
+  <div id="employeeModal" class="modal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="employeeModalTitle">
+      <div class="modal-head">
+        <h2 id="employeeModalTitle">직원 등록</h2>
+        <button id="closeEmployeeModal" type="button" class="modal-close">닫기</button>
+      </div>
+      <form id="employeeForm" class="grid-3">
+        <div>
+          <label for="empName">이름</label>
+          <input id="empName" type="text" required />
+        </div>
+        <div>
+          <label for="empDept">부서</label>
+          <input id="empDept" type="text" placeholder="예: 개발팀" required />
+        </div>
+        <div>
+          <label for="empHireDate">입사일</label>
+          <input id="empHireDate" type="date" required />
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <button type="submit">직원 추가</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
   <script>
-    function toDate(input) {
-      const [y, m, d] = input.split("-").map(Number);
-      return new Date(y, m - 1, d);
+    const KEY = "attendance-system-v1";
+
+    const state = {
+      employees: [],
+      records: []
+    };
+
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function fmtDate(date) { return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; }
+    function fmtTime(date) { return `${pad(date.getHours())}:${pad(date.getMinutes())}`; }
+
+    function parseDateTime(dateStr, timeStr) {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const [hh, mm] = timeStr.split(":").map(Number);
+      return new Date(y, m - 1, d, hh, mm, 0, 0);
     }
 
-    function fmtDate(d) {
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    function workHours(record) {
+      if (!record || !record.inTime || !record.outTime) return 0;
+      const ms = parseDateTime(record.date, record.outTime) - parseDateTime(record.date, record.inTime);
+      if (ms <= 0) return 0;
+      return Math.round((ms / 36e5) * 100) / 100;
     }
 
-    function addYears(date, years) {
-      return new Date(date.getFullYear() + years, date.getMonth(), date.getDate());
-    }
-
-    function floorMonthsBetween(start, end) {
-      if (end < start) return 0;
-      let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-      if (end.getDate() < start.getDate()) months -= 1;
-      return Math.max(0, months);
-    }
-
-    function fullYearsBetween(start, end) {
-      if (end < start) return 0;
-      let years = end.getFullYear() - start.getFullYear();
-      const anniversary = new Date(end.getFullYear(), start.getMonth(), start.getDate());
-      if (end < anniversary) years -= 1;
-      return Math.max(0, years);
-    }
-
-    function statutoryAnnualByYears(completedYears) {
-      const base = 15 + Math.floor(Math.max(0, completedYears - 1) / 2);
-      return Math.min(25, base);
-    }
-
-    function getFiscalStartContaining(date, fiscalMonth, fiscalDay) {
-      const currentYearStart = new Date(date.getFullYear(), fiscalMonth - 1, fiscalDay);
-      if (date >= currentYearStart) return currentYearStart;
-      return new Date(date.getFullYear() - 1, fiscalMonth - 1, fiscalDay);
-    }
-
-    function ceilToHalf(value) {
-      return Math.ceil(value * 2) / 2;
-    }
-
-    function formatDays(days) {
-      return Number.isInteger(days) ? `${days}일` : `${days.toFixed(1)}일`;
-    }
-
-    function addEvent(list, date, days, reason) {
-      if (days <= 0) return;
-      list.push({ date: new Date(date), days, reason });
-    }
-
-    function buildHireAccrualEvents(joinDate, baseDate, attendance80) {
-      const events = [];
-      const firstAnniv = addYears(joinDate, 1);
-
-      if (!attendance80) {
-        const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
-        for (let i = 1; i <= months; i += 1) {
-          addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "1년 미만 월차");
-        }
-        return events;
+    function load() {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        state.employees = Array.isArray(parsed.employees) ? parsed.employees : [];
+        state.records = Array.isArray(parsed.records) ? parsed.records : [];
+      } catch (_) {
+        localStorage.removeItem(KEY);
       }
-
-      const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
-      for (let i = 1; i <= months; i += 1) {
-        addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "1년 미만 월차");
-      }
-
-      if (baseDate >= firstAnniv) {
-        const completedYears = fullYearsBetween(joinDate, baseDate);
-        for (let y = 1; y <= completedYears; y += 1) {
-          const grantDate = addYears(joinDate, y);
-          const days = statutoryAnnualByYears(y);
-          addEvent(events, grantDate, days, `근속 ${y}년 연차`);
-        }
-      }
-
-      return events;
     }
 
-    function getFiscalCycleStartAfter(date, fiscalMonth, fiscalDay) {
-      const sameYear = new Date(date.getFullYear(), fiscalMonth - 1, fiscalDay);
-      if (sameYear >= date) return sameYear;
-      return new Date(date.getFullYear() + 1, fiscalMonth - 1, fiscalDay);
+    function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+    function ensureDefaults() {
+      const today = new Date();
+      document.getElementById("workDate").value = fmtDate(today);
+      document.getElementById("calendarMonth").value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}`;
+      document.getElementById("historyMonth").value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}`;
+      document.getElementById("payMonth").value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}`;
+      document.getElementById("empHireDate").value = fmtDate(today);
     }
 
-    function buildFiscalAccrualEvents(joinDate, baseDate, fiscalMonth, fiscalDay, attendance80) {
-      const events = [];
-      const firstAnniv = addYears(joinDate, 1);
-
-      if (!attendance80) {
-        const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
-        for (let i = 1; i <= months; i += 1) {
-          addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "80% 미만 월차");
-        }
-        return events;
-      }
-
-      const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
-      for (let i = 1; i <= months; i += 1) {
-        addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "1년 미만 월차");
-      }
-
-      let cycleStart = getFiscalCycleStartAfter(joinDate, fiscalMonth, fiscalDay);
-      while (cycleStart <= baseDate) {
-        const cycleEnd = new Date(cycleStart.getFullYear() + 1, cycleStart.getMonth(), cycleStart.getDate());
-
-        if (cycleStart < firstAnniv && firstAnniv < cycleEnd) {
-          const monthsPreAnniv = Math.min(11, floorMonthsBetween(joinDate > cycleStart ? joinDate : cycleStart, firstAnniv));
-          const monthsAfterAnniv = floorMonthsBetween(firstAnniv, cycleEnd);
-          const prorated = ceilToHalf((15 * monthsAfterAnniv) / 12);
-          addEvent(events, cycleStart, monthsPreAnniv + prorated, "회계연도 전환 비례연차");
-        } else if (cycleStart >= firstAnniv) {
-          const completedYears = fullYearsBetween(joinDate, cycleStart);
-          addEvent(events, cycleStart, statutoryAnnualByYears(completedYears), "회계연도 정기부여");
-        }
-
-        cycleStart = new Date(cycleStart.getFullYear() + 1, cycleStart.getMonth(), cycleStart.getDate());
-      }
-
-      return events;
+    function getRecord(empId, date) {
+      return state.records.find((r) => r.empId === empId && r.date === date);
     }
 
-    function buildYearlyRows(hireEvents, fiscalEvents, startDate, baseDate) {
-      const bucket = new Map();
-
-      const inRange = (d) => d >= startDate && d <= baseDate;
-      hireEvents.filter((e) => inRange(e.date)).forEach((e) => {
-        const y = e.date.getFullYear();
-        if (!bucket.has(y)) bucket.set(y, { hire: 0, fiscal: 0 });
-        bucket.get(y).hire += e.days;
-      });
-      fiscalEvents.filter((e) => inRange(e.date)).forEach((e) => {
-        const y = e.date.getFullYear();
-        if (!bucket.has(y)) bucket.set(y, { hire: 0, fiscal: 0 });
-        bucket.get(y).fiscal += e.days;
-      });
-
-      return Array.from(bucket.entries())
-        .sort((a, b) => a[0] - b[0])
-        .map(([year, value]) => ({
-          year,
-          hire: value.hire,
-          fiscal: value.fiscal,
-          diff: value.fiscal - value.hire
-        }));
+    function upsertRecord(payload) {
+      const idx = state.records.findIndex((r) => r.empId === payload.empId && r.date === payload.date);
+      if (idx >= 0) state.records[idx] = payload;
+      else state.records.push(payload);
+      save();
     }
 
-    function renderYearlyRows(rows) {
-      const body = document.getElementById("yearlyBody");
-      if (rows.length === 0) {
-        body.innerHTML = `<tr><td colspan="4">해당 기간에 발생 연차가 없습니다.</td></tr>`;
+    function employeeStatus(empId, date) {
+      const rec = getRecord(empId, date);
+      if (rec && rec.inTime && !rec.outTime) return "근무중";
+      return "퇴근";
+    }
+
+    function renderEmployeeRows() {
+      const date = document.getElementById("workDate").value;
+      const tbody = document.getElementById("employeeRows");
+      if (state.employees.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7">등록된 직원이 없습니다.</td></tr>`;
         return;
       }
 
-      let hireTotal = 0;
-      let fiscalTotal = 0;
-      const html = rows.map((r) => {
-        hireTotal += r.hire;
-        fiscalTotal += r.fiscal;
+      tbody.innerHTML = state.employees.map((emp) => {
+        const rec = getRecord(emp.id, date) || { inTime: "", outTime: "" };
+        const h = workHours({ empId: emp.id, date, inTime: rec.inTime, outTime: rec.outTime });
+        const status = employeeStatus(emp.id, date);
+        const statusClass = status === "근무중" ? "on" : "off";
         return `<tr>
-          <td>${r.year}년</td>
-          <td>${formatDays(r.hire)}</td>
-          <td>${formatDays(r.fiscal)}</td>
-          <td>${formatDays(r.diff)}</td>
+          <td>${emp.name}</td>
+          <td>${emp.dept}</td>
+          <td><span class="status-chip ${statusClass}">${status}</span></td>
+          <td><input type="time" data-role="edit-in" data-id="${emp.id}" value="${rec.inTime || ""}" /></td>
+          <td><input type="time" data-role="edit-out" data-id="${emp.id}" value="${rec.outTime || ""}" /></td>
+          <td class="num">${h.toFixed(2)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="edit" type="button" data-act="save" data-id="${emp.id}">저장</button>
+              <button class="danger" type="button" data-act="del" data-id="${emp.id}">삭제</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    function renderSelectors() {
+      const historySelect = document.getElementById("historyEmployee");
+      const paySelect = document.getElementById("payEmployee");
+      if (state.employees.length === 0) {
+        historySelect.innerHTML = `<option value="">직원 없음</option>`;
+        paySelect.innerHTML = `<option value="">직원 없음</option>`;
+        return;
+      }
+      const currentHistory = historySelect.value;
+      const currentPay = paySelect.value;
+      const options = state.employees.map((e) => `<option value="${e.id}">${e.name} (${e.dept})</option>`).join("");
+      historySelect.innerHTML = options;
+      paySelect.innerHTML = options;
+      if (currentHistory && state.employees.some((e) => e.id === currentHistory)) historySelect.value = currentHistory;
+      if (currentPay && state.employees.some((e) => e.id === currentPay)) paySelect.value = currentPay;
+    }
+
+    function renderHistory() {
+      const empId = document.getElementById("historyEmployee").value;
+      const month = document.getElementById("historyMonth").value;
+      const tbody = document.getElementById("historyRows");
+      if (!empId || !month) {
+        tbody.innerHTML = `<tr><td colspan="4">직원과 월을 선택해 주세요.</td></tr>`;
+        document.getElementById("kpi").textContent = "총 근무시간: 0시간 | 지각(09:00 이후 출근): 0회";
+        return;
+      }
+
+      const monthRows = state.records
+        .filter((r) => r.empId === empId && r.date.startsWith(month))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      if (monthRows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">기록이 없습니다.</td></tr>`;
+        document.getElementById("kpi").textContent = "총 근무시간: 0시간 | 지각(09:00 이후 출근): 0회";
+        return;
+      }
+
+      let total = 0;
+      let late = 0;
+      tbody.innerHTML = monthRows.map((r) => {
+        const h = workHours(r);
+        total += h;
+        if (r.inTime && r.inTime > "09:00") late += 1;
+        return `<tr>
+          <td>${r.date}</td>
+          <td>${r.inTime || "-"}</td>
+          <td>${r.outTime || "-"}</td>
+          <td class="num">${h.toFixed(2)}</td>
         </tr>`;
       }).join("");
 
-      body.innerHTML = `${html}<tr>
-        <td>합계</td>
-        <td>${formatDays(hireTotal)}</td>
-        <td>${formatDays(fiscalTotal)}</td>
-        <td>${formatDays(fiscalTotal - hireTotal)}</td>
-      </tr>`;
+      document.getElementById("kpi").textContent = `총 근무시간: ${total.toFixed(2)}시간 | 지각(09:00 이후 출근): ${late}회`;
     }
 
-    function calcHireBased(joinDate, baseDate, attendance80) {
-      const firstAnniv = addYears(joinDate, 1);
-
-      if (baseDate < firstAnniv || !attendance80) {
-        const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
-        return {
-          days: months,
-          desc: `입사 후 1년 미만(또는 출근율 80% 미만) 구간: 개근 ${months}개월로 ${months}일 산정`
-        };
+    function renderCalendar() {
+      const monthValue = document.getElementById("calendarMonth").value;
+      const grid = document.getElementById("calendarGrid");
+      if (!monthValue) {
+        grid.innerHTML = "";
+        return;
       }
 
-      const completedYears = fullYearsBetween(joinDate, baseDate);
-      const annual = statutoryAnnualByYears(completedYears);
-      const periodStart = addYears(joinDate, completedYears);
-      const periodEnd = addYears(periodStart, 1);
+      const [y, m] = monthValue.split("-").map(Number);
+      const first = new Date(y, m - 1, 1);
+      const startWeekday = first.getDay();
+      const lastDay = new Date(y, m, 0).getDate();
+      const empNameMap = new Map(state.employees.map((e) => [e.id, e.name]));
+      const monthRecords = state.records.filter((r) => r.date.startsWith(monthValue));
+      const map = new Map();
+      monthRecords.forEach((r) => {
+        const hours = workHours(r);
+        if (hours <= 0) return;
+        if (!map.has(r.date)) map.set(r.date, []);
+        const name = empNameMap.get(r.empId) || "알수없음";
+        map.get(r.date).push({ name, hours });
+      });
 
-      return {
-        days: annual,
-        desc: `근속 ${completedYears}년 완료 시점(${fmtDate(periodStart)}) 기준 부여 ${annual}일 (적용기간: ${fmtDate(periodStart)} ~ ${fmtDate(periodEnd)})`
+      const cells = [];
+      for (let i = 0; i < startWeekday; i += 1) {
+        cells.push('<div class="calendar-cell empty"></div>');
+      }
+
+      for (let day = 1; day <= lastDay; day += 1) {
+        const date = `${y}-${pad(m)}-${pad(day)}`;
+        const workers = map.get(date) || [];
+        const weekday = new Date(y, m - 1, day).getDay();
+        const wClass = weekday === 0 ? "sun" : weekday === 6 ? "sat" : "";
+        const lineHtml = workers.length > 0
+          ? workers.map((w) => `<div class="cal-line">${w.name} ${w.hours.toFixed(2)}시간</div>`).join("")
+          : ``;
+
+        cells.push(`<div class="calendar-cell ${wClass}" data-date="${date}">
+          <div class="day-num">${day}</div>
+          ${lineHtml}
+        </div>`);
+      }
+
+      while (cells.length % 7 !== 0) {
+        cells.push('<div class="calendar-cell empty"></div>');
+      }
+
+      grid.innerHTML = cells.join("");
+    }
+
+    function mondayOf(date) {
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      return d;
+    }
+
+    function calculatePayroll() {
+      const empId = document.getElementById("payEmployee").value;
+      const monthValue = document.getElementById("payMonth").value;
+      const hourlyWage = Number(document.getElementById("hourlyWage").value || 0);
+      const summaryEl = document.getElementById("paySummary");
+      const rowsEl = document.getElementById("payWeekRows");
+
+      if (!empId || !monthValue || hourlyWage <= 0) {
+        summaryEl.textContent = "직원, 산정 월, 시급을 올바르게 입력해 주세요.";
+        rowsEl.innerHTML = `<tr><td colspan="5">입력값을 확인해 주세요.</td></tr>`;
+        return;
+      }
+
+      const records = state.records
+        .filter((r) => r.empId === empId && r.date.startsWith(monthValue))
+        .map((r) => ({ ...r, hours: workHours(r), dateObj: new Date(r.date) }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const totalHours = records.reduce((sum, r) => sum + r.hours, 0);
+      const basePay = totalHours * hourlyWage;
+
+      const weekMap = new Map();
+      records.forEach((r) => {
+        if (r.hours <= 0) return;
+        const start = mondayOf(r.dateObj);
+        const key = fmtDate(start);
+        if (!weekMap.has(key)) weekMap.set(key, []);
+        weekMap.get(key).push(r);
+      });
+
+      const weekRows = Array.from(weekMap.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([weekStart, list]) => {
+        const start = new Date(weekStart);
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+        const weekHours = list.reduce((sum, item) => sum + item.hours, 0);
+        const workedDays = list.length;
+        const holidayHours = weekHours >= 15 && workedDays > 0 ? (weekHours / workedDays) : 0;
+        const holidayPay = holidayHours * hourlyWage;
+        return {
+          label: `${fmtDate(start)} ~ ${fmtDate(end)}`,
+          weekHours,
+          workedDays,
+          holidayHours,
+          holidayPay
+        };
+      });
+
+      const holidayTotalPay = weekRows.reduce((sum, w) => sum + w.holidayPay, 0);
+      const totalPay = basePay + holidayTotalPay;
+      const employee = state.employees.find((e) => e.id === empId);
+      const name = employee ? employee.name : "선택 직원";
+
+      summaryEl.innerHTML =
+        `직원: <strong>${name}</strong><br>` +
+        `기본급: <strong>${Math.round(basePay).toLocaleString()}원</strong> ` +
+        `(실근무 ${totalHours.toFixed(2)}시간 × 시급 ${hourlyWage.toLocaleString()}원)<br>` +
+        `주휴수당: <strong>${Math.round(holidayTotalPay).toLocaleString()}원</strong><br>` +
+        `예상 월급(주휴 포함): <strong>${Math.round(totalPay).toLocaleString()}원</strong>`;
+
+      if (weekRows.length === 0) {
+        rowsEl.innerHTML = `<tr><td colspan="5">해당 월 근무기록이 없습니다.</td></tr>`;
+        return;
+      }
+
+      rowsEl.innerHTML = weekRows.map((w) => `<tr>
+        <td>${w.label}</td>
+        <td class="num">${w.weekHours.toFixed(2)}</td>
+        <td class="num">${w.workedDays}</td>
+        <td class="num">${w.holidayHours.toFixed(2)}</td>
+        <td class="num">${Math.round(w.holidayPay).toLocaleString()}</td>
+      </tr>`).join("");
+    }
+
+    function bindTabs() {
+      const tabAttendance = document.getElementById("tabAttendance");
+      const tabPayroll = document.getElementById("tabPayroll");
+      const attendancePanel = document.getElementById("attendancePanel");
+      const payrollPanel = document.getElementById("payrollPanel");
+
+      const openAttendance = () => {
+        tabAttendance.classList.add("active");
+        tabPayroll.classList.remove("active");
+        attendancePanel.classList.add("show");
+        payrollPanel.classList.remove("show");
       };
-    }
 
-    function calcFiscalBased(joinDate, baseDate, fiscalMonth, fiscalDay, attendance80) {
-      const fiscalStart = getFiscalStartContaining(baseDate, fiscalMonth, fiscalDay);
-      const fiscalEnd = new Date(fiscalStart.getFullYear() + 1, fiscalStart.getMonth(), fiscalStart.getDate());
-      const firstAnniv = addYears(joinDate, 1);
-
-      if (!attendance80) {
-        const start = joinDate > fiscalStart ? joinDate : fiscalStart;
-        const months = Math.min(11, floorMonthsBetween(start, baseDate));
-        return {
-          days: months,
-          desc: `출근율 80% 미만 가정: 회계연도 내 개근 ${months}개월로 ${months}일 산정 (기간 ${fmtDate(start)} ~ ${fmtDate(baseDate)})`
-        };
-      }
-
-      if (baseDate < firstAnniv) {
-        const start = joinDate > fiscalStart ? joinDate : fiscalStart;
-        const months = Math.min(11, floorMonthsBetween(start, baseDate));
-        return {
-          days: months,
-          desc: `1년 미만 구간: 회계연도 기준 개근 ${months}개월로 ${months}일 산정 (기간 ${fmtDate(start)} ~ ${fmtDate(baseDate)})`
-        };
-      }
-
-      if (fiscalStart < firstAnniv && firstAnniv <= baseDate) {
-        const monthsPreAnniv = Math.min(11, floorMonthsBetween(joinDate > fiscalStart ? joinDate : fiscalStart, firstAnniv));
-        const monthsAfterAnnivToFiscalEnd = floorMonthsBetween(firstAnniv, fiscalEnd);
-        const prorated = ceilToHalf((15 * monthsAfterAnnivToFiscalEnd) / 12);
-        const total = monthsPreAnniv + prorated;
-        return {
-          days: total,
-          desc: `회계연도 전환 구간: 월차 ${monthsPreAnniv}일 + 1주년 이후 비례연차 ${prorated}일(15×${monthsAfterAnnivToFiscalEnd}/12, 0.5일 올림)`
-        };
-      }
-
-      const completedYearsAtFiscalStart = fullYearsBetween(joinDate, fiscalStart);
-      const annual = statutoryAnnualByYears(completedYearsAtFiscalStart);
-      return {
-        days: annual,
-        desc: `회계연도 시작일(${fmtDate(fiscalStart)}) 기준 근속 ${completedYearsAtFiscalStart}년으로 ${annual}일 부여`
+      const openPayroll = () => {
+        tabPayroll.classList.add("active");
+        tabAttendance.classList.remove("active");
+        payrollPanel.classList.add("show");
+        attendancePanel.classList.remove("show");
+        calculatePayroll();
       };
+
+      tabAttendance.addEventListener("click", openAttendance);
+      tabPayroll.addEventListener("click", openPayroll);
     }
 
-    function initSelects() {
-      const fiscalMonth = document.getElementById("fiscalMonth");
-      const fiscalDay = document.getElementById("fiscalDay");
-      for (let i = 1; i <= 12; i += 1) {
-        const op = document.createElement("option");
-        op.value = String(i);
-        op.textContent = `${i}월`;
-        if (i === 1) op.selected = true;
-        fiscalMonth.appendChild(op);
-      }
-      for (let i = 1; i <= 31; i += 1) {
-        const op = document.createElement("option");
-        op.value = String(i);
-        op.textContent = `${i}일`;
-        if (i === 1) op.selected = true;
-        fiscalDay.appendChild(op);
-      }
+    function bindAttendanceSubTabs() {
+      const subTabProcess = document.getElementById("subTabProcess");
+      const subTabCalendar = document.getElementById("subTabCalendar");
+      const subTabHistory = document.getElementById("subTabHistory");
+      const processPanel = document.getElementById("processPanel");
+      const calendarPanel = document.getElementById("calendarPanel");
+      const historyPanel = document.getElementById("historyPanel");
 
-      const today = new Date();
-      document.getElementById("baseDate").value = fmtDate(today);
-      document.getElementById("joinDate").value = fmtDate(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
-      document.getElementById("startDate").value = fmtDate(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
+      const open = (target) => {
+        [subTabProcess, subTabCalendar, subTabHistory].forEach((btn) => btn.classList.remove("active"));
+        [processPanel, calendarPanel, historyPanel].forEach((panel) => panel.classList.remove("show"));
+
+        if (target === "process") {
+          subTabProcess.classList.add("active");
+          processPanel.classList.add("show");
+          return;
+        }
+        if (target === "calendar") {
+          subTabCalendar.classList.add("active");
+          calendarPanel.classList.add("show");
+          return;
+        }
+        subTabHistory.classList.add("active");
+        historyPanel.classList.add("show");
+      };
+
+      subTabProcess.addEventListener("click", () => open("process"));
+      subTabCalendar.addEventListener("click", () => open("calendar"));
+      subTabHistory.addEventListener("click", () => open("history"));
     }
 
-    function bindForm() {
-      const form = document.getElementById("form");
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
+    function bindEmployeeModal() {
+      const modal = document.getElementById("employeeModal");
+      const openBtn = document.getElementById("openEmployeeModal");
+      const closeBtn = document.getElementById("closeEmployeeModal");
+      const close = () => {
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden", "true");
+      };
+      const open = () => {
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+        document.getElementById("empName").focus();
+      };
 
-        const joinDateInput = document.getElementById("joinDate").value;
-        const startDateInput = document.getElementById("startDate").value;
-        const baseDateInput = document.getElementById("baseDate").value;
-        const fiscalMonth = Number(document.getElementById("fiscalMonth").value);
-        const fiscalDay = Number(document.getElementById("fiscalDay").value);
-        const attendance80 = document.getElementById("attendance").value === "yes";
-
-        if (!joinDateInput || !startDateInput || !baseDateInput) {
-          alert("입사일, 시작일, 기준일을 모두 입력해 주세요.");
-          return;
-        }
-
-        const joinDate = toDate(joinDateInput);
-        const startDate = toDate(startDateInput);
-        const baseDate = toDate(baseDateInput);
-
-        if (baseDate < joinDate) {
-          alert("기준일은 입사일보다 빠를 수 없습니다.");
-          return;
-        }
-        if (startDate < joinDate) {
-          alert("시작일은 입사일보다 빠를 수 없습니다.");
-          return;
-        }
-        if (startDate > baseDate) {
-          alert("시작일은 기준일보다 늦을 수 없습니다.");
-          return;
-        }
-
-        const fiscalStartTry = new Date(baseDate.getFullYear(), fiscalMonth - 1, fiscalDay);
-        if (fiscalStartTry.getMonth() + 1 !== fiscalMonth || fiscalStartTry.getDate() !== fiscalDay) {
-          alert("회계연도 시작일이 유효하지 않습니다. (예: 2월 30일 불가)");
-          return;
-        }
-
-        const hire = calcHireBased(joinDate, baseDate, attendance80);
-        const fiscal = calcFiscalBased(joinDate, baseDate, fiscalMonth, fiscalDay, attendance80);
-
-        document.getElementById("hireDays").textContent = `${hire.days}일`;
-        document.getElementById("fiscalDays").textContent = `${fiscal.days}일`;
-        document.getElementById("hireDesc").textContent = hire.desc;
-        document.getElementById("fiscalDesc").textContent = fiscal.desc;
-
-        const diff = fiscal.days - hire.days;
-        const summary = diff === 0
-          ? `기준일 ${fmtDate(baseDate)} 기준으로 두 방식의 산정 결과가 동일합니다 (${hire.days}일).`
-          : diff > 0
-            ? `기준일 ${fmtDate(baseDate)} 기준으로 회계연도 방식이 입사일 방식보다 ${diff}일 많습니다.`
-            : `기준일 ${fmtDate(baseDate)} 기준으로 입사일 방식이 회계연도 방식보다 ${Math.abs(diff)}일 많습니다.`;
-
-        document.getElementById("summary").textContent = summary;
-
-        const hireEvents = buildHireAccrualEvents(joinDate, baseDate, attendance80);
-        const fiscalEvents = buildFiscalAccrualEvents(joinDate, baseDate, fiscalMonth, fiscalDay, attendance80);
-        const rows = buildYearlyRows(hireEvents, fiscalEvents, startDate, baseDate);
-        renderYearlyRows(rows);
-
-        document.getElementById("result").classList.remove("hidden");
+      openBtn.addEventListener("click", open);
+      closeBtn.addEventListener("click", close);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) close();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("show")) close();
       });
     }
 
-    initSelects();
-    bindForm();
+    function bindEmployeeForm() {
+      const form = document.getElementById("employeeForm");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("empName").value.trim();
+        const dept = document.getElementById("empDept").value.trim();
+        const hireDate = document.getElementById("empHireDate").value;
+        if (!name || !dept || !hireDate) return;
+
+        state.employees.push({ id: crypto.randomUUID(), name, dept, hireDate });
+        save();
+        form.reset();
+        document.getElementById("empHireDate").value = fmtDate(new Date());
+        document.getElementById("employeeModal").classList.remove("show");
+        document.getElementById("employeeModal").setAttribute("aria-hidden", "true");
+        refreshAll();
+      });
+    }
+
+    function bindActions() {
+      document.getElementById("employeeRows").addEventListener("click", (e) => {
+        const button = e.target.closest("button");
+        if (!button) return;
+
+        const empId = button.dataset.id;
+        const action = button.dataset.act;
+        const date = document.getElementById("workDate").value;
+
+        if (action === "del") {
+          state.records = state.records.filter((r) => !(r.empId === empId && r.date === date));
+          save();
+          refreshAll(false);
+          return;
+        }
+
+        const existing = getRecord(empId, date) || { empId, date, inTime: "", outTime: "" };
+
+        if (action === "save") {
+          const inInput = document.querySelector(`input[data-role="edit-in"][data-id="${empId}"]`);
+          const outInput = document.querySelector(`input[data-role="edit-out"][data-id="${empId}"]`);
+          const inTime = inInput ? inInput.value : "";
+          const outTime = outInput ? outInput.value : "";
+
+          if (outTime && !inTime) {
+            alert("퇴근시간만 단독으로 저장할 수 없습니다. 출근시간을 먼저 입력해 주세요.");
+            return;
+          }
+          if (inTime && outTime && outTime <= inTime) {
+            alert("퇴근시간은 출근시간보다 늦어야 합니다.");
+            return;
+          }
+
+          if (!inTime && !outTime) {
+            state.records = state.records.filter((r) => !(r.empId === empId && r.date === date));
+            save();
+            refreshAll(false);
+            return;
+          }
+
+          upsertRecord({ empId, date, inTime, outTime });
+          refreshAll(false);
+        }
+      });
+
+      document.getElementById("workDate").addEventListener("change", () => refreshAll(false));
+      document.getElementById("historyEmployee").addEventListener("change", renderHistory);
+      document.getElementById("historyMonth").addEventListener("change", renderHistory);
+      document.getElementById("calendarMonth").addEventListener("change", renderCalendar);
+      document.getElementById("payEmployee").addEventListener("change", calculatePayroll);
+      document.getElementById("payMonth").addEventListener("change", calculatePayroll);
+      document.getElementById("calcPayrollBtn").addEventListener("click", calculatePayroll);
+      document.getElementById("refreshBtn").addEventListener("click", () => refreshAll(false));
+      document.getElementById("exportBtn").addEventListener("click", exportCsv);
+      document.getElementById("calendarGrid").addEventListener("click", (e) => {
+        const cell = e.target.closest(".calendar-cell[data-date]");
+        if (!cell) return;
+        document.getElementById("workDate").value = cell.dataset.date;
+        refreshAll(false);
+      });
+    }
+
+    function exportCsv() {
+      const headers = ["empId", "name", "dept", "date", "inTime", "outTime", "hours"];
+      const rows = [];
+      state.records.forEach((r) => {
+        const emp = state.employees.find((e) => e.id === r.empId);
+        if (!emp) return;
+        rows.push([r.empId, emp.name, emp.dept, r.date, r.inTime || "", r.outTime || "", workHours(r).toFixed(2)]);
+      });
+
+      const csv = [
+        headers.join(","),
+        ...rows.map((row) => row.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(","))
+      ].join("\n");
+
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `attendance-${fmtDate(new Date())}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function refreshAll() {
+      renderEmployeeRows();
+      renderSelectors();
+      renderHistory();
+      renderCalendar();
+    }
+
+    load();
+    ensureDefaults();
+    bindTabs();
+    bindAttendanceSubTabs();
+    bindEmployeeModal();
+    bindEmployeeForm();
+    bindActions();
+    refreshAll();
   </script>
 </body>
 </html>
