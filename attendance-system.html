@@ -46,6 +46,28 @@
       padding: 16px;
     }
 
+    .layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 12px;
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .content {
+      display: grid;
+      gap: 14px;
+    }
+
     h1, h2 {
       margin: 0 0 10px;
       line-height: 1.3;
@@ -88,6 +110,7 @@
       color: var(--text);
       padding: 10px 11px;
       font-size: 0.93rem;
+      min-height: 42px;
     }
 
     input[type="time"] {
@@ -113,6 +136,19 @@
       grid-template-columns: 1fr auto auto;
       gap: 10px;
       align-items: end;
+    }
+
+    .bulk-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto auto;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: end;
+    }
+
+    .bulk-tools button {
+      width: auto;
+      min-width: 140px;
     }
 
     .status-chip {
@@ -282,7 +318,6 @@
     }
 
     .badge.people { background: #dcfce7; color: #166534; }
-    .badge.hours { background: #e0f2fe; color: #075985; }
 
     .modal {
       position: fixed;
@@ -375,12 +410,68 @@
     }
 
     @media (max-width: 860px) {
-      .grid, .grid-3, .toolbar { grid-template-columns: 1fr; }
+      .grid, .grid-3, .toolbar, .layout, .bulk-tools { grid-template-columns: 1fr; }
       .row-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .wrap { margin-top: 14px; }
+      .wrap {
+        margin-top: 12px;
+        padding: 0 10px 18px;
+      }
+      .card {
+        padding: 12px;
+      }
+      .sidebar {
+        position: static;
+        padding: 10px;
+      }
+      .nav-list {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
+      }
+      .nav-list::-webkit-scrollbar {
+        display: none;
+      }
+      .tab-btn {
+        min-width: 96px;
+        flex: 0 0 auto;
+        font-size: 0.84rem;
+      }
+      .tabs {
+        gap: 6px;
+      }
+      .tabs .tab-btn {
+        min-width: 88px;
+      }
+      .row-actions button {
+        min-height: 38px;
+      }
     }
 
     @media (max-width: 700px) {
+      h1 {
+        font-size: 1.22rem;
+      }
+      h2 {
+        font-size: 0.98rem;
+      }
+      .calendar {
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .calendar-head,
+      .calendar-grid {
+        width: max-content;
+        grid-template-columns: repeat(7, 110px);
+      }
+      .calendar-cell {
+        min-height: 88px;
+      }
+      .toolbar-pay button,
+      .bulk-tools button {
+        width: 100%;
+      }
       table.responsive thead {
         display: none;
       }
@@ -428,23 +519,27 @@
     <section class="card">
       <h1>근태관리시스템</h1>
       <p class="sub">직원 등록, 출근/퇴근 처리, 달력 조회, 주휴수당 포함 월급 산출을 지원합니다.</p>
-      <div class="tabs">
-        <button id="openEmployeeModal" class="tab-btn action" type="button">직원등록</button>
-        <button id="goTodayBtn" class="tab-btn ghost" type="button">오늘로 이동</button>
-        <button id="tabAttendance" class="tab-btn active" type="button">근태관리</button>
-        <button id="tabPayroll" class="tab-btn" type="button">급여산출</button>
-      </div>
       <p class="hint">데이터는 현재 브라우저의 로컬스토리지(`attendance-system-v1`)에 저장됩니다.</p>
     </section>
 
-    <section id="attendancePanel" class="tab-panel show">
-      <div class="tabs">
-        <button id="subTabProcess" class="tab-btn active" type="button">근태처리</button>
-        <button id="subTabCalendar" class="tab-btn" type="button">근태달력</button>
-        <button id="subTabHistory" class="tab-btn" type="button">개별조회</button>
-      </div>
+    <section class="layout">
+      <aside class="card sidebar">
+        <div class="nav-list">
+          <button id="openEmployeeModal" class="tab-btn action" type="button">직원등록</button>
+          <button id="tabAttendance" class="tab-btn active" type="button">근태관리</button>
+          <button id="tabPayroll" class="tab-btn" type="button">급여산출</button>
+        </div>
+      </aside>
 
-      <section id="processPanel" class="card attendance-subpanel show">
+      <div class="content">
+        <section id="attendancePanel" class="tab-panel show">
+          <div class="tabs">
+            <button id="subTabProcess" class="tab-btn active" type="button">근태처리</button>
+            <button id="subTabCalendar" class="tab-btn" type="button">근태달력</button>
+            <button id="subTabHistory" class="tab-btn" type="button">개별조회</button>
+          </div>
+
+          <section id="processPanel" class="card attendance-subpanel show">
         <h2>근태 처리</h2>
         <div class="toolbar">
           <div>
@@ -460,15 +555,27 @@
             <input id="employeeSearch" type="text" placeholder="예: 홍길동, 개발팀" />
           </div>
         </div>
+        <div class="bulk-tools">
+          <div>
+            <label for="bulkInTime">일괄 출근시간</label>
+            <input id="bulkInTime" type="time" />
+          </div>
+          <div>
+            <label for="bulkOutTime">일괄 퇴근시간</label>
+            <input id="bulkOutTime" type="time" />
+          </div>
+          <button id="applyBulkBtn" type="button" class="secondary">검색직원 일괄적용</button>
+          <button id="copyWeekBtn" type="button" class="secondary">이번주→다음주 복사</button>
+        </div>
         <div style="margin-top: 12px; overflow-x: auto;">
           <table class="responsive">
             <thead>
               <tr>
                 <th>이름</th>
                 <th>부서</th>
-                <th>상태</th>
                 <th>출근</th>
                 <th>퇴근</th>
+                <th class="num">휴게(분)</th>
                 <th class="num">근무(시간)</th>
                 <th>처리</th>
               </tr>
@@ -476,9 +583,9 @@
             <tbody id="employeeRows"></tbody>
           </table>
         </div>
-      </section>
+          </section>
 
-      <section id="calendarPanel" class="card attendance-subpanel">
+          <section id="calendarPanel" class="card attendance-subpanel">
         <h2>근태 달력</h2>
         <div class="grid">
           <div>
@@ -507,7 +614,7 @@
             <input id="historyMonth" type="month" />
           </div>
         </div>
-        <div id="kpi" class="kpi" style="margin-top: 10px;">총 근무시간: 0시간 | 지각(09:00 이후 출근): 0회</div>
+        <div id="kpi" class="kpi" style="margin-top: 10px;">총 근무시간: 0시간</div>
         <div style="margin-top: 12px; overflow-x: auto;">
           <table class="responsive">
             <thead>
@@ -521,11 +628,11 @@
             <tbody id="historyRows"></tbody>
           </table>
         </div>
-      </section>
-    </section>
+          </section>
+        </section>
 
-    <section id="payrollPanel" class="tab-panel">
-      <section class="card">
+        <section id="payrollPanel" class="tab-panel">
+          <section class="card">
         <h2>월급 산출 (주휴수당 포함)</h2>
         <div class="grid-3">
           <div>
@@ -563,7 +670,9 @@
             </tbody>
           </table>
         </div>
-      </section>
+          </section>
+        </section>
+      </div>
     </section>
   </main>
 
@@ -598,7 +707,7 @@
   <script>
     const KEY = "attendance-system-v1";
     const LAST_WAGE_KEY = "attendance-last-hourly-wage";
-    const MIN_WAGE_PRESET = 10030;
+    const MIN_WAGE_PRESET = 10320;
 
     const state = {
       employees: [],
@@ -619,7 +728,10 @@
       if (!record || !record.inTime || !record.outTime) return 0;
       const ms = parseDateTime(record.date, record.outTime) - parseDateTime(record.date, record.inTime);
       if (ms <= 0) return 0;
-      return Math.round((ms / 36e5) * 100) / 100;
+      const breakMinutes = Number(record.breakMinutes || 0);
+      const breakMs = Math.max(0, breakMinutes) * 60 * 1000;
+      const netMs = Math.max(0, ms - breakMs);
+      return Math.round((netMs / 36e5) * 100) / 100;
     }
 
     function load() {
@@ -647,19 +759,6 @@
       }, 2200);
     }
 
-    function goTodayAll() {
-      const today = new Date();
-      const todayDate = fmtDate(today);
-      const monthValue = `${today.getFullYear()}-${pad(today.getMonth() + 1)}`;
-      document.getElementById("workDate").value = todayDate;
-      document.getElementById("calendarMonth").value = monthValue;
-      document.getElementById("historyMonth").value = monthValue;
-      document.getElementById("payMonth").value = monthValue;
-      refreshAll(false);
-      calculatePayroll();
-      showToast("오늘 기준으로 날짜를 맞췄습니다.");
-    }
-
     function ensureDefaults() {
       const today = new Date();
       document.getElementById("workDate").value = fmtDate(today);
@@ -677,6 +776,12 @@
       return state.records.find((r) => r.empId === empId && r.date === date);
     }
 
+    function upsertRecordNoSave(payload) {
+      const idx = state.records.findIndex((r) => r.empId === payload.empId && r.date === payload.date);
+      if (idx >= 0) state.records[idx] = payload;
+      else state.records.push(payload);
+    }
+
     function upsertRecord(payload) {
       const idx = state.records.findIndex((r) => r.empId === payload.empId && r.date === payload.date);
       if (idx >= 0) state.records[idx] = payload;
@@ -690,19 +795,23 @@
       return "퇴근";
     }
 
+    function getFilteredEmployees() {
+      const query = (document.getElementById("employeeSearch")?.value || "").trim().toLowerCase();
+      return state.employees.filter((emp) => {
+        if (!query) return true;
+        return emp.name.toLowerCase().includes(query) || emp.dept.toLowerCase().includes(query);
+      });
+    }
+
     function renderEmployeeRows() {
       const date = document.getElementById("workDate").value;
-      const query = (document.getElementById("employeeSearch")?.value || "").trim().toLowerCase();
       const tbody = document.getElementById("employeeRows");
       if (state.employees.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7">등록된 직원이 없습니다.</td></tr>`;
         return;
       }
 
-      const filtered = state.employees.filter((emp) => {
-        if (!query) return true;
-        return emp.name.toLowerCase().includes(query) || emp.dept.toLowerCase().includes(query);
-      });
+      const filtered = getFilteredEmployees();
 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7">검색 결과가 없습니다.</td></tr>`;
@@ -710,16 +819,15 @@
       }
 
       tbody.innerHTML = filtered.map((emp) => {
-        const rec = getRecord(emp.id, date) || { inTime: "", outTime: "" };
-        const h = workHours({ empId: emp.id, date, inTime: rec.inTime, outTime: rec.outTime });
-        const status = employeeStatus(emp.id, date);
-        const statusClass = status === "근무중" ? "on" : "off";
+        const rec = getRecord(emp.id, date) || { inTime: "", outTime: "", breakMinutes: 0 };
+        const breakMinutes = Number(rec.breakMinutes || 0);
+        const h = workHours({ empId: emp.id, date, inTime: rec.inTime, outTime: rec.outTime, breakMinutes });
         return `<tr>
           <td data-label="이름">${emp.name}</td>
           <td data-label="부서">${emp.dept}</td>
-          <td data-label="상태"><span class="status-chip ${statusClass}">${status}</span></td>
           <td data-label="출근"><input type="time" data-role="edit-in" data-id="${emp.id}" value="${rec.inTime || ""}" /></td>
           <td data-label="퇴근"><input type="time" data-role="edit-out" data-id="${emp.id}" value="${rec.outTime || ""}" /></td>
+          <td class="num" data-label="휴게(분)"><input type="number" min="0" step="10" data-role="edit-break" data-id="${emp.id}" value="${breakMinutes}" /></td>
           <td class="num" data-label="근무(시간)">${h.toFixed(2)}</td>
           <td data-label="처리">
             <div class="row-actions">
@@ -729,6 +837,76 @@
           </td>
         </tr>`;
       }).join("");
+    }
+
+    function applyBulkTimes() {
+      const date = document.getElementById("workDate").value;
+      const inTime = document.getElementById("bulkInTime").value;
+      const outTime = document.getElementById("bulkOutTime").value;
+      const targets = getFilteredEmployees();
+
+      if (targets.length === 0) {
+        showToast("일괄 적용할 직원이 없습니다.", "warn");
+        return;
+      }
+      if (outTime && !inTime) {
+        showToast("퇴근시간만 단독 입력할 수 없습니다.", "err");
+        return;
+      }
+      if (inTime && outTime && outTime <= inTime) {
+        showToast("퇴근시간은 출근시간보다 늦어야 합니다.", "err");
+        return;
+      }
+
+      let applied = 0;
+      targets.forEach((emp) => {
+        if (!inTime && !outTime) {
+          const before = state.records.length;
+          state.records = state.records.filter((r) => !(r.empId === emp.id && r.date === date));
+          if (before !== state.records.length) applied += 1;
+          return;
+        }
+        const existing = getRecord(emp.id, date);
+        const breakMinutes = Number(existing?.breakMinutes || 0);
+        upsertRecordNoSave({ empId: emp.id, date, inTime, outTime, breakMinutes });
+        applied += 1;
+      });
+
+      save();
+      refreshAll(false);
+      showToast(`${applied}명에게 일괄 적용했습니다.`);
+    }
+
+    function copyThisWeekToNextWeek() {
+      const baseDate = new Date(document.getElementById("workDate").value);
+      const sourceStart = mondayOf(baseDate);
+      const targetStart = new Date(sourceStart.getFullYear(), sourceStart.getMonth(), sourceStart.getDate() + 7);
+      let copied = 0;
+
+      state.employees.forEach((emp) => {
+        for (let i = 0; i < 7; i += 1) {
+          const sourceDate = fmtDate(new Date(sourceStart.getFullYear(), sourceStart.getMonth(), sourceStart.getDate() + i));
+          const targetDate = fmtDate(new Date(targetStart.getFullYear(), targetStart.getMonth(), targetStart.getDate() + i));
+          const rec = getRecord(emp.id, sourceDate);
+          if (!rec || (!rec.inTime && !rec.outTime)) continue;
+          upsertRecordNoSave({
+            empId: emp.id,
+            date: targetDate,
+            inTime: rec.inTime || "",
+            outTime: rec.outTime || "",
+            breakMinutes: Number(rec.breakMinutes || 0)
+          });
+          copied += 1;
+        }
+      });
+
+      save();
+      refreshAll(false);
+      if (copied === 0) {
+        showToast("복사할 주간 근태내역이 없습니다.", "warn");
+        return;
+      }
+      showToast(`이번 주 패턴 ${copied}건을 다음 주로 복사했습니다.`);
     }
 
     function renderSelectors() {
@@ -754,7 +932,7 @@
       const tbody = document.getElementById("historyRows");
       if (!empId || !month) {
         tbody.innerHTML = `<tr><td colspan="4">직원과 월을 선택해 주세요.</td></tr>`;
-        document.getElementById("kpi").textContent = "총 근무시간: 0시간 | 지각(09:00 이후 출근): 0회";
+        document.getElementById("kpi").textContent = "총 근무시간: 0시간";
         return;
       }
 
@@ -764,16 +942,14 @@
 
       if (monthRows.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4">기록이 없습니다.</td></tr>`;
-        document.getElementById("kpi").textContent = "총 근무시간: 0시간 | 지각(09:00 이후 출근): 0회";
+        document.getElementById("kpi").textContent = "총 근무시간: 0시간";
         return;
       }
 
       let total = 0;
-      let late = 0;
       tbody.innerHTML = monthRows.map((r) => {
         const h = workHours(r);
         total += h;
-        if (r.inTime && r.inTime > "09:00") late += 1;
         return `<tr>
           <td data-label="날짜">${r.date}</td>
           <td data-label="출근">${r.inTime || "-"}</td>
@@ -782,7 +958,7 @@
         </tr>`;
       }).join("");
 
-      document.getElementById("kpi").textContent = `총 근무시간: ${total.toFixed(2)}시간 | 지각(09:00 이후 출근): ${late}회`;
+      document.getElementById("kpi").textContent = `총 근무시간: ${total.toFixed(2)}시간`;
     }
 
     function renderCalendar() {
@@ -818,14 +994,12 @@
         const workers = map.get(date) || [];
         const weekday = new Date(y, m - 1, day).getDay();
         const wClass = weekday === 0 ? "sun" : weekday === 6 ? "sat" : "";
-        const totalHours = workers.reduce((sum, w) => sum + w.hours, 0);
         const lineHtml = workers.length > 0
           ? workers.map((w) => `<div class="cal-line">${w.name} ${w.hours.toFixed(2)}시간</div>`).join("")
           : ``;
         const summaryHtml = workers.length > 0
           ? `<div class="cal-summary">
               <span class="badge people">${workers.length}명</span>
-              <span class="badge hours">${totalHours.toFixed(2)}시간</span>
             </div>`
           : ``;
 
@@ -887,7 +1061,7 @@
         const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
         const weekHours = list.reduce((sum, item) => sum + item.hours, 0);
         const workedDays = list.length;
-        const holidayHours = weekHours >= 15 && workedDays > 0 ? (weekHours / workedDays) : 0;
+        const holidayHours = Math.min(8, (weekHours / 40) * 8);
         const holidayPay = holidayHours * hourlyWage;
         return {
           label: `${fmtDate(start)} ~ ${fmtDate(end)}`,
@@ -922,6 +1096,7 @@
         <td class="num" data-label="주휴시간">${w.holidayHours.toFixed(2)}</td>
         <td class="num" data-label="주휴수당(원)">${Math.round(w.holidayPay).toLocaleString()}</td>
       </tr>`).join("");
+
     }
 
     function applyMinWagePreset() {
@@ -1044,8 +1219,10 @@
     function saveEmployeeRecord(empId, date, silent = false) {
       const inInput = document.querySelector(`input[data-role="edit-in"][data-id="${empId}"]`);
       const outInput = document.querySelector(`input[data-role="edit-out"][data-id="${empId}"]`);
+      const breakInput = document.querySelector(`input[data-role="edit-break"][data-id="${empId}"]`);
       const inTime = inInput ? inInput.value : "";
       const outTime = outInput ? outInput.value : "";
+      const breakMinutes = Number(breakInput ? breakInput.value : 0);
 
       if (outTime && !inTime) {
         showToast("퇴근시간만 단독으로 저장할 수 없습니다.", "err");
@@ -1055,8 +1232,12 @@
         showToast("퇴근시간은 출근시간보다 늦어야 합니다.", "err");
         return false;
       }
+      if (Number.isNaN(breakMinutes) || breakMinutes < 0) {
+        showToast("휴게시간은 0분 이상이어야 합니다.", "err");
+        return false;
+      }
 
-      if (!inTime && !outTime) {
+      if (!inTime && !outTime && breakMinutes === 0) {
         state.records = state.records.filter((r) => !(r.empId === empId && r.date === date));
         save();
         refreshAll(false);
@@ -1064,7 +1245,7 @@
         return true;
       }
 
-      upsertRecord({ empId, date, inTime, outTime });
+      upsertRecord({ empId, date, inTime, outTime, breakMinutes });
       refreshAll(false);
       if (!silent) showToast("근태내역이 저장되었습니다.");
       return true;
@@ -1120,7 +1301,8 @@
       document.getElementById("calcPayrollBtn").addEventListener("click", calculatePayroll);
       document.getElementById("applyMinWageBtn").addEventListener("click", applyMinWagePreset);
       document.getElementById("loadLastWageBtn").addEventListener("click", loadLastWage);
-      document.getElementById("goTodayBtn").addEventListener("click", goTodayAll);
+      document.getElementById("applyBulkBtn").addEventListener("click", applyBulkTimes);
+      document.getElementById("copyWeekBtn").addEventListener("click", copyThisWeekToNextWeek);
       document.getElementById("refreshBtn").addEventListener("click", () => refreshAll(false));
       document.getElementById("exportBtn").addEventListener("click", exportCsv);
       document.getElementById("calendarGrid").addEventListener("click", (e) => {
@@ -1133,12 +1315,12 @@
     }
 
     function exportCsv() {
-      const headers = ["empId", "name", "dept", "date", "inTime", "outTime", "hours"];
+      const headers = ["empId", "name", "dept", "date", "inTime", "outTime", "breakMinutes", "hours"];
       const rows = [];
       state.records.forEach((r) => {
         const emp = state.employees.find((e) => e.id === r.empId);
         if (!emp) return;
-        rows.push([r.empId, emp.name, emp.dept, r.date, r.inTime || "", r.outTime || "", workHours(r).toFixed(2)]);
+        rows.push([r.empId, emp.name, emp.dept, r.date, r.inTime || "", r.outTime || "", Number(r.breakMinutes || 0), workHours(r).toFixed(2)]);
       });
 
       const csv = [
