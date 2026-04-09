@@ -197,6 +197,12 @@
       border-color: transparent;
     }
 
+    .tab-btn.action {
+      background: #ecfeff;
+      color: #0f766e;
+      border-color: #99f6e4;
+    }
+
     .tab-panel { display: none; }
     .tab-panel.show { display: grid; gap: 14px; }
     .attendance-subpanel { display: none; }
@@ -313,11 +319,9 @@
     <section class="card">
       <h1>근태관리시스템</h1>
       <p class="sub">직원 등록, 출근/퇴근 처리, 달력 조회, 주휴수당 포함 월급 산출을 지원합니다.</p>
-      <div style="margin-top: 10px;">
-        <button id="openEmployeeModal" type="button" style="max-width: 220px;">직원 등록 팝업 열기</button>
-      </div>
       <div class="tabs">
         <button id="tabAttendance" class="tab-btn active" type="button">근태관리</button>
+        <button id="openEmployeeModal" class="tab-btn action" type="button">직원등록</button>
         <button id="tabPayroll" class="tab-btn" type="button">급여산출</button>
       </div>
       <p class="hint">데이터는 현재 브라우저의 로컬스토리지(`attendance-system-v1`)에 저장됩니다.</p>
