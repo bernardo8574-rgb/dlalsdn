@@ -152,6 +152,44 @@
       color: #0c4a6e;
     }
 
+    .yearly {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .yearly h3 {
+      margin: 0;
+      padding: 12px 14px;
+      font-size: 0.98rem;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+    }
+
+    .yearly table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .yearly th, .yearly td {
+      border-bottom: 1px solid #edf2f7;
+      padding: 10px 12px;
+      text-align: right;
+    }
+
+    .yearly th:first-child, .yearly td:first-child {
+      text-align: left;
+    }
+
+    .yearly tr:last-child td {
+      border-bottom: 0;
+      font-weight: 700;
+      background: #f8fafc;
+    }
+
     .hidden {
       display: none;
     }
@@ -176,6 +214,10 @@
           <div>
             <label for="joinDate">입사일</label>
             <input id="joinDate" type="date" required />
+          </div>
+          <div>
+            <label for="startDate">시작일 (연도별 발생 조회 시작)</label>
+            <input id="startDate" type="date" required />
           </div>
           <div>
             <label for="baseDate">기준일 (비교 시점)</label>
@@ -216,6 +258,20 @@
         </div>
 
         <div id="summary" class="summary"></div>
+        <section class="yearly">
+          <h3>시작일~기준일 연도별 발생 연차</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>연도</th>
+                <th>입사일 기준</th>
+                <th>회계연도 기준</th>
+                <th>차이(회계-입사)</th>
+              </tr>
+            </thead>
+            <tbody id="yearlyBody"></tbody>
+          </table>
+        </section>
       </section>
 
       <div class="note">
@@ -269,6 +325,140 @@
 
     function ceilToHalf(value) {
       return Math.ceil(value * 2) / 2;
+    }
+
+    function formatDays(days) {
+      return Number.isInteger(days) ? `${days}일` : `${days.toFixed(1)}일`;
+    }
+
+    function addEvent(list, date, days, reason) {
+      if (days <= 0) return;
+      list.push({ date: new Date(date), days, reason });
+    }
+
+    function buildHireAccrualEvents(joinDate, baseDate, attendance80) {
+      const events = [];
+      const firstAnniv = addYears(joinDate, 1);
+
+      if (!attendance80) {
+        const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
+        for (let i = 1; i <= months; i += 1) {
+          addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "1년 미만 월차");
+        }
+        return events;
+      }
+
+      const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
+      for (let i = 1; i <= months; i += 1) {
+        addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "1년 미만 월차");
+      }
+
+      if (baseDate >= firstAnniv) {
+        const completedYears = fullYearsBetween(joinDate, baseDate);
+        for (let y = 1; y <= completedYears; y += 1) {
+          const grantDate = addYears(joinDate, y);
+          const days = statutoryAnnualByYears(y);
+          addEvent(events, grantDate, days, `근속 ${y}년 연차`);
+        }
+      }
+
+      return events;
+    }
+
+    function getFiscalCycleStartAfter(date, fiscalMonth, fiscalDay) {
+      const sameYear = new Date(date.getFullYear(), fiscalMonth - 1, fiscalDay);
+      if (sameYear >= date) return sameYear;
+      return new Date(date.getFullYear() + 1, fiscalMonth - 1, fiscalDay);
+    }
+
+    function buildFiscalAccrualEvents(joinDate, baseDate, fiscalMonth, fiscalDay, attendance80) {
+      const events = [];
+      const firstAnniv = addYears(joinDate, 1);
+
+      if (!attendance80) {
+        const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
+        for (let i = 1; i <= months; i += 1) {
+          addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "80% 미만 월차");
+        }
+        return events;
+      }
+
+      const months = Math.min(11, floorMonthsBetween(joinDate, baseDate));
+      for (let i = 1; i <= months; i += 1) {
+        addEvent(events, new Date(joinDate.getFullYear(), joinDate.getMonth() + i, joinDate.getDate()), 1, "1년 미만 월차");
+      }
+
+      let cycleStart = getFiscalCycleStartAfter(joinDate, fiscalMonth, fiscalDay);
+      while (cycleStart <= baseDate) {
+        const cycleEnd = new Date(cycleStart.getFullYear() + 1, cycleStart.getMonth(), cycleStart.getDate());
+
+        if (cycleStart < firstAnniv && firstAnniv < cycleEnd) {
+          const monthsPreAnniv = Math.min(11, floorMonthsBetween(joinDate > cycleStart ? joinDate : cycleStart, firstAnniv));
+          const monthsAfterAnniv = floorMonthsBetween(firstAnniv, cycleEnd);
+          const prorated = ceilToHalf((15 * monthsAfterAnniv) / 12);
+          addEvent(events, cycleStart, monthsPreAnniv + prorated, "회계연도 전환 비례연차");
+        } else if (cycleStart >= firstAnniv) {
+          const completedYears = fullYearsBetween(joinDate, cycleStart);
+          addEvent(events, cycleStart, statutoryAnnualByYears(completedYears), "회계연도 정기부여");
+        }
+
+        cycleStart = new Date(cycleStart.getFullYear() + 1, cycleStart.getMonth(), cycleStart.getDate());
+      }
+
+      return events;
+    }
+
+    function buildYearlyRows(hireEvents, fiscalEvents, startDate, baseDate) {
+      const bucket = new Map();
+
+      const inRange = (d) => d >= startDate && d <= baseDate;
+      hireEvents.filter((e) => inRange(e.date)).forEach((e) => {
+        const y = e.date.getFullYear();
+        if (!bucket.has(y)) bucket.set(y, { hire: 0, fiscal: 0 });
+        bucket.get(y).hire += e.days;
+      });
+      fiscalEvents.filter((e) => inRange(e.date)).forEach((e) => {
+        const y = e.date.getFullYear();
+        if (!bucket.has(y)) bucket.set(y, { hire: 0, fiscal: 0 });
+        bucket.get(y).fiscal += e.days;
+      });
+
+      return Array.from(bucket.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([year, value]) => ({
+          year,
+          hire: value.hire,
+          fiscal: value.fiscal,
+          diff: value.fiscal - value.hire
+        }));
+    }
+
+    function renderYearlyRows(rows) {
+      const body = document.getElementById("yearlyBody");
+      if (rows.length === 0) {
+        body.innerHTML = `<tr><td colspan="4">해당 기간에 발생 연차가 없습니다.</td></tr>`;
+        return;
+      }
+
+      let hireTotal = 0;
+      let fiscalTotal = 0;
+      const html = rows.map((r) => {
+        hireTotal += r.hire;
+        fiscalTotal += r.fiscal;
+        return `<tr>
+          <td>${r.year}년</td>
+          <td>${formatDays(r.hire)}</td>
+          <td>${formatDays(r.fiscal)}</td>
+          <td>${formatDays(r.diff)}</td>
+        </tr>`;
+      }).join("");
+
+      body.innerHTML = `${html}<tr>
+        <td>합계</td>
+        <td>${formatDays(hireTotal)}</td>
+        <td>${formatDays(fiscalTotal)}</td>
+        <td>${formatDays(fiscalTotal - hireTotal)}</td>
+      </tr>`;
     }
 
     function calcHireBased(joinDate, baseDate, attendance80) {
@@ -356,6 +546,7 @@
       const today = new Date();
       document.getElementById("baseDate").value = fmtDate(today);
       document.getElementById("joinDate").value = fmtDate(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
+      document.getElementById("startDate").value = fmtDate(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
     }
 
     function bindForm() {
@@ -364,21 +555,31 @@
         e.preventDefault();
 
         const joinDateInput = document.getElementById("joinDate").value;
+        const startDateInput = document.getElementById("startDate").value;
         const baseDateInput = document.getElementById("baseDate").value;
         const fiscalMonth = Number(document.getElementById("fiscalMonth").value);
         const fiscalDay = Number(document.getElementById("fiscalDay").value);
         const attendance80 = document.getElementById("attendance").value === "yes";
 
-        if (!joinDateInput || !baseDateInput) {
-          alert("입사일과 기준일을 모두 입력해 주세요.");
+        if (!joinDateInput || !startDateInput || !baseDateInput) {
+          alert("입사일, 시작일, 기준일을 모두 입력해 주세요.");
           return;
         }
 
         const joinDate = toDate(joinDateInput);
+        const startDate = toDate(startDateInput);
         const baseDate = toDate(baseDateInput);
 
         if (baseDate < joinDate) {
           alert("기준일은 입사일보다 빠를 수 없습니다.");
+          return;
+        }
+        if (startDate < joinDate) {
+          alert("시작일은 입사일보다 빠를 수 없습니다.");
+          return;
+        }
+        if (startDate > baseDate) {
+          alert("시작일은 기준일보다 늦을 수 없습니다.");
           return;
         }
 
@@ -404,6 +605,12 @@
             : `기준일 ${fmtDate(baseDate)} 기준으로 입사일 방식이 회계연도 방식보다 ${Math.abs(diff)}일 많습니다.`;
 
         document.getElementById("summary").textContent = summary;
+
+        const hireEvents = buildHireAccrualEvents(joinDate, baseDate, attendance80);
+        const fiscalEvents = buildFiscalAccrualEvents(joinDate, baseDate, fiscalMonth, fiscalDay, attendance80);
+        const rows = buildYearlyRows(hireEvents, fiscalEvents, startDate, baseDate);
+        renderYearlyRows(rows);
+
         document.getElementById("result").classList.remove("hidden");
       });
     }
